@@ -2,7 +2,7 @@
 Import-Module GroupPolicy
 
 # Generate GPO Report and save it as XML
-# Get-GPOReport -All -ReportType Xml -Domain "RTSnetworking.com" -Server "RTS-DC1" -Path xml-report\gporeport.xml
+Get-GPOReport -All -ReportType Xml -Domain "RTSnetworking.com" -Server "RTS-DC1" -Path xml-report\gporeport.xml
 
 # Convert XML to XML object for easier handling
 [xml]$xmlData = Get-Content 'xml-report\gporeport.xml'
@@ -19,9 +19,9 @@ $passwordHistory = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionD
 $desiredPasswordHistory = 24
 # Compare current setting to desired setting
 if ([int]$passwordHistory.SettingNumber -ge $desiredPasswordHistory) {
-    Write-Output "PASSED: Current PasswordHistorySize is $($passwordHistory.SettingNumber)"
+    Write-Output "PASSED: 'Enforce password history' is set to $($passwordHistory.SettingNumber)"
 } else {
-    Write-Output "FAILED: Current PasswordHistorySize is $($passwordHistory.SettingNumber)"
+    Write-Output "FAILED: 'Enforce password history' is set to $($passwordHistory.SettingNumber)"
 }
 
 $maxPasswordAge = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='MaximumPasswordAge']", $nsManager)
@@ -29,9 +29,9 @@ $maxPasswordAge = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionDa
 $desiredMaxPasswordAge = 365
 # Compare current setting to desired setting
 if ([int]$maxPasswordAge.SettingNumber -le $desiredMaxPasswordAge -and [int]$maxPasswordAge.SettingNumber -gt 0 ) {
-    Write-Output "PASSED: Current MaximumPasswordAge is $($maxPasswordAge.SettingNumber)"
+    Write-Output "PASSED: 'Maximum password age' is set to $($maxPasswordAge.SettingNumber)"
 } else {
-    Write-Output "FAILED: Current MaximumPasswordAge is $($passwordHistory.SettingNumber)"
+    Write-Output "FAILED: 'Maximum password age' is set to $($passwordHistory.SettingNumber)"
 }
 
 $minPasswordAge = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='MinimumPasswordAge']", $nsManager)
@@ -39,9 +39,9 @@ $minPasswordAge = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionDa
 $desiredMinPasswordAge = 1
 # Compare current setting to desired setting
 if ([int]$minPasswordAge.SettingNumber -le $desiredMinPasswordAge) {
-    Write-Output "PASSED: Current MinimumPasswordAge is $($minPasswordAge.SettingNumber)"
+    Write-Output "PASSED: 'Minimum password age' is set to $($minPasswordAge.SettingNumber)"
 } else {
-    Write-Output "FAILED: Current MinimumPasswordAge is $($minPasswordAge.SettingNumber)"
+    Write-Output "FAILED: 'Minimum password age' is set to $($minPasswordAge.SettingNumber)"
 }
 
 $minPasswordLength = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='MinimumPasswordLength']", $nsManager)
@@ -49,9 +49,9 @@ $minPasswordLength = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:Extensio
 $desiredMinPasswordLength = 14
 # Compare current setting to desired setting
 if ([int]$minPasswordLength.SettingNumber -ge $desiredMinPasswordLength) {
-    Write-Output "PASSED: Current MinimumPasswordLength is $($minPasswordLength.SettingNumber)"
+    Write-Output "PASSED: 'Minimum password length' is set to $($minPasswordLength.SettingNumber)"
 } else {
-    Write-Output "FAILED: Current MinimumPasswordLength is $($minPasswordLength.SettingNumber)."
+    Write-Output "FAILED: 'Minimum password length' is set to $($minPasswordLength.SettingNumber)."
 }
 
 $passwordComplexity = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='PasswordComplexity']", $nsManager)
@@ -59,7 +59,100 @@ $passwordComplexity = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:Extensi
 $desiredPasswordComplexity = "true"
 # Compare current setting to desired setting
 if ([string]$passwordComplexity.SettingBoolean -eq $desiredPasswordComplexity) {
-    Write-Output "PASSED: PasswordComplexity is enabled"
+    Write-Output "PASSED: 'Password must meet complexity requirements' is set to enabled"
 } else {
-    Write-Output "FAILED: PasswordComplexity is disabled."
+    Write-Output "FAILED: 'Password must meet complexity requirements' is set to disabled."
+}
+
+$clearTextPassword = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='ClearTextPassword']", $nsManager)
+# Desired setting for password complexity
+$desiredClearTextPassword = "false"
+# Compare current setting to desired setting
+if ([string]$clearTextPassword.SettingBoolean -eq $desiredClearTextPassword) {
+    Write-Output "PASSED: 'Store passwords using reversible encryption' is set to disabled"
+} else {
+    Write-Output "FAILED: 'Store passwords using reversible encryption' is set to enabled."
+}
+
+
+# Define the registry path and the key
+$registryPath = "HKLM:\System\CurrentControlSet\Control\SAM"
+$propertyName = "RelaxMinimumPasswordLengthLimits"
+$fullRegistryPath = "$registryPath\$propertyName"
+# Check if the registry path exists
+if (Test-Path $fullRegistryPath) {
+    try {
+        # Get the registry property value
+        $registryValue = Get-ItemProperty -Path $registryPath -Name $propertyName
+
+        # Check if the value is as expected
+        if ($registryValue.$propertyName -eq 1) {
+            Write-Output "PASSED: 'Relax minimum password length limits' is set to enabled."
+        } else {
+            Write-Output "FAILED: 'Relax minimum password length limits' is set to disabled."
+        }
+        Write-Output "This setting only affects local accounts on the computer."
+    } catch {
+        Write-Output "Failed to retrieve the property. It may not exist or some error occurred."
+        Write-Output "This setting only affects local accounts on the computer."
+    }
+} else {
+    Write-Output "NEUTRAL: 'Relax minimum password length limits' is not set."
+    Write-Output "  '^^^' This setting only affects local accounts on the computer."
+}
+
+$lockoutDuration = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='LockoutDuration']", $nsManager)
+# Desired setting for password complexity
+$desiredLockoutDuration = 15
+if ($null -ne $lockoutDuration){
+    # Compare current setting to desired setting
+    if ([int]$lockoutDuration.SettingNumber -ge $desiredLockoutDuration) {
+        Write-Output "PASSED: 'Account lockout duration' is set to $($lockoutDuration.SettingNumber)."
+    } else {
+        Write-Output "FAILED: 'Account lockout duration' is set to $($lockoutDuration.SettingNumber).."
+    }
+} else {
+    Write-Output "FAILED: 'Account lockout durations' is not set."
+}
+
+$lockoutThreshold = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='LockoutBadCount']", $nsManager)
+# Desired setting for password complexity
+$desiredLockoutThreshold = 5
+if ($null -ne $lockoutThreshold){
+    # Compare current setting to desired setting
+    if ([int]$lockoutThreshold.SettingNumber -le $desiredLockoutThreshold -and [int]$lockoutThreshold.SettingNumber -ne 0) {
+        Write-Output "PASSED: 'Account lockout threshold' is set to $($lockoutThreshold.SettingNumber)."
+    } else {
+        Write-Output "FAILED: 'Account lockout threshold' is set to $($lockoutThreshold.SettingNumber).."
+    }
+} else {
+    Write-Output "FAILED: 'Account lockout threshold' is not set."
+}
+
+$allowAdministratorAccountLockout = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='AllowAdministratorLockout']", $nsManager)
+# Desired setting for password complexity
+$desiredAdministratorLockout = "true"
+if ($null -ne $allowAdministratorAccountLockout){
+    # Compare current setting to desired setting
+    if ([string]$allowAdministratorAccountLockout.SettingBoolean -eq $desiredAdministratorLockout ) {
+        Write-Output "PASSED: 'Allow Administrator account lockout' is set to enabled."
+    } else {
+        Write-Output "FAILED: 'Allow Administrator account lockout' is set to disabled."
+    }
+} else {
+    Write-Output "FAILED: 'Allow Administrator account lockout' is not set."
+}
+
+$resetLockoutCount = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:Account[sec:Name='ResetLockoutCount']", $nsManager)
+# Desired setting for password complexity
+$desiredResetLockoutCount = 15
+if ($null -ne $resetLockoutCount){
+    # Compare current setting to desired setting
+    if ([int]$resetLockoutCount.SettingNumber -ge $desiredResetLockoutCount ) {
+        Write-Output "PASSED: 'Reset account lockout counter after' is set to $($resetLockoutCount.SettingNumber)."
+    } else {
+        Write-Output "FAILED: 'Reset account lockout counter after' is set to $($resetLockoutCount.SettingNumber)."
+    }
+} else {
+    Write-Output "FAILED: 'Reset account lockout counter after' is not set."
 }
