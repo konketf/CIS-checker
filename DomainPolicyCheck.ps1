@@ -157,15 +157,3 @@ if ($null -ne $resetLockoutCount){
     Write-Output "FAILED: 'Reset account lockout counter after' is not set."
 }
 
-# Define the policy path and the value name
-$policyPath = "HKLM:\System\CurrentControlSet\Control\Lsa"
-$policyName = "SCM:trusted"
-
-# Check if the policy is set to 'No One'
-$currentValue = (Get-ItemProperty -Path $policyPath -Name $policyName -ErrorAction SilentlyContinue).$policyName
-
-if ($currentValue -eq "") {
-    Write-Output "The policy 'Access Credential Manager as a trusted caller' is set to 'No One'."
-} else {
-    Write-Output "The policy 'Access Credential Manager as a trusted caller' is not set to 'No One'."
-}
