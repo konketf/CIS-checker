@@ -685,3 +685,535 @@ if ($null -ne $auditPolicy) {
 } else {
     Write-Host "FAILED: 'Generate security audits' policy not found. Set it to 'LOCAL SERVICE, NETWORK SERVICE'!" -ForegroundColor Red
 }
+
+
+# XPath to find the 'Impersonate a client after authentication' policy within the specific GPO
+$impersonatePolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeImpersonatePrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators", "NT AUTHORITY\LOCAL SERVICE", "NT AUTHORITY\NETWORK SERVICE", "NT AUTHORITY\SERVICE")
+
+if ($null -ne $impersonatePolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $impersonatePolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Impersonate a client after authentication' is set to 'Administrators, LOCAL SERVICE, NETWORK SERVICE, SERVICE'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Impersonate a client after authentication' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators, LOCAL SERVICE, NETWORK SERVICE, SERVICE'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Impersonate a client after authentication' policy not found. Set it to 'Administrators, LOCAL SERVICE, NETWORK SERVICE, SERVICE'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Increase scheduling priority' policy within the specific GPO
+$schedulingPriorityPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeIncreaseBasePriorityPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators", "Window Manager\Window Manager Group")
+
+if ($null -ne $schedulingPriorityPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $schedulingPriorityPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Increase scheduling priority' is set to 'Administrators, Window Manager\Window Manager Group'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Increase scheduling priority' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators, Window Manager\Window Manager Group'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Increase scheduling priority' policy not found. Set it to 'Administrators, Window Manager\Window Manager Group'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Load and unload device drivers' policy within the specific GPO
+$deviceDriversPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeLoadDriverPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $deviceDriversPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $deviceDriversPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Load and unload device drivers' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Load and unload device drivers' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Load and unload device drivers' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Lock pages in memory' policy within the specific GPO
+$lockPagesPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeLockMemoryPrivilege']", $nsManager)
+
+if ($null -ne $lockPagesPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $lockPagesPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    if ($currentAccounts.Count -eq 0) {
+        Write-Host "PASSED: 'Lock pages in memory' is set to 'No One'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Lock pages in memory' is not set to 'No One'. Current settings: $($currentAccounts -join ', '). Set it to 'No One'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "PASSED: 'Lock pages in memory' policy not found, which implies it is set to 'No One'." -ForegroundColor Blue
+}
+
+
+# XPath to find the 'Log on as a batch job' policy within the specific GPO
+$batchJobPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeBatchLogonRight']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $batchJobPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $batchJobPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Log on as a batch job' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Log on as a batch job' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Log on as a batch job' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Log on as a service' policy within the specific GPO
+$serviceLogonPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeServiceLogonRight']", $nsManager)
+
+# Define desired accounts based on the conditions
+$desiredAccounts = @()
+if ((Get-WindowsFeature -Name Hyper-V).Installed -eq $true) {
+    $desiredAccounts += "NT VIRTUAL MACHINE\Virtual Machines"
+}
+
+if ($null -ne $serviceLogonPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $serviceLogonPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    if ($desiredAccounts.Count -eq 0 -and $currentAccounts.Count -eq 0) {
+        Write-Host "PASSED: 'Log on as a service' is set to 'No One'." -ForegroundColor Blue
+    } else {
+        # Compare current settings with desired settings
+        $isCorrect = $true
+        foreach ($account in $desiredAccounts) {
+            if ($currentAccounts -notcontains $account) {
+                $isCorrect = $false
+                break
+            }
+        }
+        foreach ($account in $currentAccounts) {
+            if ($desiredAccounts -notcontains $account) {
+                $isCorrect = $false
+                break
+            }
+        }
+
+        if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+            Write-Host "PASSED: 'Log on as a service' is set to $($desiredAccounts -join ', ')." -ForegroundColor Blue
+        } else {
+            Write-Host "FAILED: 'Log on as a service' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to $($desiredAccounts -join ', ') or 'No One' if Hyper-V is not used!" -ForegroundColor Red
+        }
+    }
+} else {
+    Write-Host "NEUTRAL: 'Log on as a service' policy not found. Set it to 'Virtual Machines' if Hyper-V is installed! If Hyper-V isn't installed, leave it as it is." -ForegroundColor Yellow
+}
+
+
+# XPath to find the 'Manage auditing and security log' policy within the specific GPO
+$auditLogPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeSecurityPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $auditLogPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $auditLogPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Manage auditing and security log' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Manage auditing and security log' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Manage auditing and security log' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Modify an object label' policy within the specific GPO
+$modifyObjectLabelPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeRelabelPrivilege']", $nsManager)
+
+if ($null -ne $modifyObjectLabelPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $modifyObjectLabelPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    if ($currentAccounts.Count -eq 0) {
+        Write-Host "PASSED: 'Modify an object label' is set to 'No One'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Modify an object label' is not set to 'No One'. Current settings: $($currentAccounts -join ', '). Set it to 'No One'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "PASSED: 'Modify an object label' policy not found, which implies it is set to 'No One'." -ForegroundColor Blue
+}
+
+
+# XPath to find the 'Modify firmware environment values' policy within the specific GPO
+$firmwarePolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeSystemEnvironmentPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $firmwarePolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $firmwarePolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Modify firmware environment values' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Modify firmware environment values' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Modify firmware environment values' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Perform volume maintenance tasks' policy within the specific GPO
+$volumeMaintenancePolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeManageVolumePrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $volumeMaintenancePolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $volumeMaintenancePolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Perform volume maintenance tasks' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Perform volume maintenance tasks' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Perform volume maintenance tasks' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Profile single process' policy within the specific GPO
+$profileSingleProcessPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeProfileSingleProcessPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $profileSingleProcessPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $profileSingleProcessPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Profile single process' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Profile single process' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Profile single process' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Profile system performance' policy within the specific GPO
+$profileSystemPerformancePolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeSystemProfilePrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators", "NT SERVICE\WdiServiceHost")
+
+if ($null -ne $profileSystemPerformancePolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $profileSystemPerformancePolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Profile system performance' is set to 'Administrators, NT SERVICE\WdiServiceHost'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Profile system performance' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators, NT SERVICE\WdiServiceHost'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Profile system performance' policy not found. Set it to 'Administrators, NT SERVICE\WdiServiceHost'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Replace a process level token' policy within the specific GPO
+$replaceTokenPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeAssignPrimaryTokenPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("NT AUTHORITY\LOCAL SERVICE", "NT AUTHORITY\NETWORK SERVICE")
+
+if ($null -ne $replaceTokenPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $replaceTokenPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Replace a process level token' is set to 'LOCAL SERVICE, NETWORK SERVICE'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Replace a process level token' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'LOCAL SERVICE, NETWORK SERVICE'!" -ForegroundColor Red
+        Write-Host "On most computers, this is the default configuration and there will be no negative impact. However, if you have installed Web Server (IIS), you will need to allow the IIS application pool(s) to be granted this User Right Assignment." -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "FAILED: 'Replace a process level token' policy not found. Set it to 'LOCAL SERVICE, NETWORK SERVICE'!" -ForegroundColor Red  
+}
+
+
+# XPath to find the 'Restore files and directories' policy within the specific GPO
+$restoreFilesPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeRestorePrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $restoreFilesPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $restoreFilesPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Restore files and directories' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Restore files and directories' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Restore files and directories' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Shut down the system' policy within the specific GPO
+$shutdownPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeShutdownPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators", "BUILTIN\Users")
+
+if ($null -ne $shutdownPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $shutdownPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Shut down the system' is set to 'Administrators, Users'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Shut down the system' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators, Users'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Shut down the system' policy not found. Set it to 'Administrators, Users'!" -ForegroundColor Red
+}
+
+
+# XPath to find the 'Take ownership of files or other objects' policy within the specific GPO
+$takeOwnershipPolicy = $xmlData.SelectSingleNode("//gp:GPO/gp:Computer/gp:ExtensionData/gp:Extension/sec:UserRightsAssignment[sec:Name='SeTakeOwnershipPrivilege']", $nsManager)
+
+# Desired accounts
+$desiredAccounts = @("BUILTIN\Administrators")
+
+if ($null -ne $takeOwnershipPolicy) {
+    # Extract current accounts assigned to the policy
+    $currentAccounts = $takeOwnershipPolicy.SelectNodes("sec:Member/types:Name", $nsManager) | ForEach-Object { $_.InnerText.Trim() }
+
+    # Compare current settings with desired settings
+    $isCorrect = $true
+    foreach ($account in $desiredAccounts) {
+        if ($currentAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+    foreach ($account in $currentAccounts) {
+        if ($desiredAccounts -notcontains $account) {
+            $isCorrect = $false
+            break
+        }
+    }
+
+    if ($isCorrect -and ($currentAccounts.Count -eq $desiredAccounts.Count)) {
+        Write-Host "PASSED: 'Take ownership of files or other objects' is set to 'Administrators'." -ForegroundColor Blue
+    } else {
+        Write-Host "FAILED: 'Take ownership of files or other objects' is not set correctly. Current settings: $($currentAccounts -join ', '). Set it to 'Administrators'!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "FAILED: 'Take ownership of files or other objects' policy not found. Set it to 'Administrators'!" -ForegroundColor Red
+}
